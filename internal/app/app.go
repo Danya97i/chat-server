@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"flag"
+	"log"
 	"net"
 
 	"google.golang.org/grpc"
@@ -19,11 +20,13 @@ func init() {
 	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
 }
 
+// App - инициализация приложения
 type App struct {
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
 }
 
+// NewApp creates new App instance
 func NewApp(ctx context.Context) (*App, error) {
 	a := &App{}
 	err := a.initDeps(ctx)
@@ -33,6 +36,7 @@ func NewApp(ctx context.Context) (*App, error) {
 	return a, nil
 }
 
+// Run - запуск приложения
 func (a *App) Run() error {
 	return a.runGrpcServer()
 }
@@ -71,6 +75,7 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 }
 
 func (a *App) runGrpcServer() error {
+	log.Printf("GRPC server is running on %s", a.serviceProvider.GRPCConfig().Address())
 	l, err := net.Listen("tcp", a.serviceProvider.GRPCConfig().Address())
 	if err != nil {
 		return err

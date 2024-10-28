@@ -10,11 +10,13 @@ import (
 	pb "github.com/Danya97i/chat-server/pkg/chat_v1"
 )
 
+// Server - имплементация gRPC-сервера
 type Server struct {
 	pb.UnimplementedChatV1Server
 	chatService service.ChatService
 }
 
+// NewServer - создает новый gRPC-сервер
 func NewServer(chatService service.ChatService) *Server {
 	return &Server{chatService: chatService}
 }
@@ -40,7 +42,7 @@ func (s *Server) DeleteChat(ctx context.Context, req *pb.DeleteChatRequest) (*em
 	return nil, nil
 }
 
-// Метод для отправки сообщения в чат
+// SendMesage - метод для отправки сообщения в чат
 func (s *Server) SendMesage(_ context.Context, req *pb.SendMessageRequest) (*emptypb.Empty, error) {
 	log.Println("send message request", req)
 	return nil, nil

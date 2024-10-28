@@ -7,6 +7,7 @@ import (
 	"github.com/Danya97i/chat-server/internal/client/db"
 	"github.com/Danya97i/chat-server/internal/client/db/pg"
 	"github.com/Danya97i/chat-server/internal/client/db/transaction"
+	"github.com/Danya97i/chat-server/internal/closer"
 	"github.com/Danya97i/chat-server/internal/config"
 	"github.com/Danya97i/chat-server/internal/config/env"
 	"github.com/Danya97i/chat-server/internal/repository"
@@ -29,6 +30,7 @@ func newServiceProvider() *serviceProvider {
 	return &serviceProvider{}
 }
 
+// PGConfig returns config for postgres
 func (sp *serviceProvider) PGConfig() config.PGConfig {
 	if sp.pgConfig == nil {
 		pgConfig, err := env.NewPgConfig()
@@ -40,6 +42,7 @@ func (sp *serviceProvider) PGConfig() config.PGConfig {
 	return sp.pgConfig
 }
 
+// GRPCConfig returns config for grpc
 func (sp *serviceProvider) GRPCConfig() config.GRPCConfig {
 	if sp.grpcConfig == nil {
 		grpcConfig, err := env.NewGrpcConfig()
@@ -51,17 +54,23 @@ func (sp *serviceProvider) GRPCConfig() config.GRPCConfig {
 	return sp.grpcConfig
 }
 
+// DBClient returns db client
 func (sp *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if sp.dbClient == nil {
 		client, err := pg.NewPGClient(ctx, sp.PGConfig().DSN())
 		if err != nil {
 			panic(err)
 		}
+		if err := client.DB().Ping(ctx); err != nil {
+			panic(err)
+		}
+		closer.Add(client.Close)
 		sp.dbClient = client
 	}
 	return sp.dbClient
 }
 
+// TxManager returns transaction manager
 func (sp *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	if sp.txManager == nil {
 		sp.txManager = transaction.NewTransactionManager(sp.DBClient(ctx).DB())
@@ -69,6 +78,7 @@ func (sp *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	return sp.txManager
 }
 
+// ChatRepository returns chat repository
 func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRepository {
 	if sp.chatRepository == nil {
 		sp.chatRepository = chatRepo.NewRepository(sp.DBClient(ctx))
@@ -76,6 +86,7 @@ func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRe
 	return sp.chatRepository
 }
 
+// ChatService returns chat service
 func (sp *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 	if sp.chatService == nil {
 		sp.chatService = chatServ.NewService(sp.ChatRepository(ctx), sp.TxManager(ctx))
@@ -83,6 +94,7 @@ func (sp *serviceProvider) ChatService(ctx context.Context) service.ChatService 
 	return sp.chatService
 }
 
+// ChatServer returns chat server
 func (sp *serviceProvider) ChatServer(ctx context.Context) *chatServer.Server {
 	if sp.chatServer == nil {
 		sp.chatServer = chatServer.NewServer(sp.ChatService(ctx))

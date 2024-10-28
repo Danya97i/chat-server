@@ -3,20 +3,22 @@ package chat
 import (
 	"context"
 
+	"github.com/Masterminds/squirrel"
+
 	"github.com/Danya97i/chat-server/internal/client/db"
 	"github.com/Danya97i/chat-server/internal/repository"
-	"github.com/Masterminds/squirrel"
 )
 
 type repo struct {
 	db db.Client
 }
 
+// NewRepository makes new repository
 func NewRepository(db db.Client) repository.ChatRepository {
 	return &repo{db: db}
 }
 
-// Create – метод репозитория для создания чата
+// Create - creates new chat in database
 func (r *repo) Create(ctx context.Context, title string) (int64, error) {
 	insertChatQueryBuilder := squirrel.Insert("chats").
 		PlaceholderFormat(squirrel.Dollar).
@@ -31,15 +33,18 @@ func (r *repo) Create(ctx context.Context, title string) (int64, error) {
 		RawQuery: insertChatQuery,
 	}
 	var chatID int64
-	r.db.DB().ScanOneContext(ctx, &chatID, query, args...)
+	if err := r.db.DB().ScanOneContext(ctx, &chatID, query, args...); err != nil {
+		return 0, err
+	}
 
 	return chatID, nil
 }
 
+// AddChatUsers – save users to chat in database
 func (r *repo) AddChatUsers(ctx context.Context, chatID int64, userEmails []string) error {
 	insertUsersQueryBuilder := squirrel.Insert("chat_users").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("chat_id", "user_id")
+		Columns("chat_id", "user_email")
 	for _, email := range userEmails {
 		insertUsersQueryBuilder = insertUsersQueryBuilder.Values(chatID, email)
 	}
@@ -57,7 +62,7 @@ func (r *repo) AddChatUsers(ctx context.Context, chatID int64, userEmails []stri
 	return nil
 }
 
-// Delete – метод репозитория для удаления чата
+// Delete – deletes chat from database
 func (r *repo) Delete(ctx context.Context, id int64) error {
 	deleteChatQueryBuilder := squirrel.Delete("chats").
 		PlaceholderFormat(squirrel.Dollar).
