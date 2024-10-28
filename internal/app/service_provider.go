@@ -12,6 +12,7 @@ import (
 	"github.com/Danya97i/chat-server/internal/config/env"
 	"github.com/Danya97i/chat-server/internal/repository"
 	chatRepo "github.com/Danya97i/chat-server/internal/repository/chat"
+	logRepo "github.com/Danya97i/chat-server/internal/repository/logs"
 	"github.com/Danya97i/chat-server/internal/service"
 	chatServ "github.com/Danya97i/chat-server/internal/service/chat"
 )
@@ -24,6 +25,7 @@ type serviceProvider struct {
 	chatRepository repository.ChatRepository
 	chatService    service.ChatService
 	chatServer     *chatServer.Server
+	logRepository  repository.LogRepository
 }
 
 func newServiceProvider() *serviceProvider {
@@ -89,7 +91,7 @@ func (sp *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRe
 // ChatService returns chat service
 func (sp *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 	if sp.chatService == nil {
-		sp.chatService = chatServ.NewService(sp.ChatRepository(ctx), sp.TxManager(ctx))
+		sp.chatService = chatServ.NewService(sp.ChatRepository(ctx), sp.LogRepository(ctx), sp.TxManager(ctx))
 	}
 	return sp.chatService
 }
@@ -100,4 +102,11 @@ func (sp *serviceProvider) ChatServer(ctx context.Context) *chatServer.Server {
 		sp.chatServer = chatServer.NewServer(sp.ChatService(ctx))
 	}
 	return sp.chatServer
+}
+
+func (sp *serviceProvider) LogRepository(ctx context.Context) repository.LogRepository {
+	if sp.logRepository == nil {
+		sp.logRepository = logRepo.NewRepository(sp.DBClient(ctx))
+	}
+	return sp.logRepository
 }
