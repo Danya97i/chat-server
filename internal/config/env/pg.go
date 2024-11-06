@@ -22,6 +22,7 @@ func NewPgConfig() (*pgConfig, error) {
 	return &pgConfig{dsn: dsn}, nil
 }
 
+// DSN возвращает строку соединения с БД
 func (c *pgConfig) DSN() string {
 	return c.dsn
 }

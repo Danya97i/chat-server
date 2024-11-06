@@ -28,6 +28,7 @@ func NewGrpcConfig() (*grpcConfig, error) {
 	return &grpcConfig{host, port}, nil
 }
 
+// Address возвращает адрес сервера gRPC
 func (c *grpcConfig) Address() string {
 	return net.JoinHostPort(c.host, c.port)
 }

@@ -1,3 +1,5 @@
 .idea
+.vscode
 /bin/
 .env
+cmd/grpc_server/.DS_Store
