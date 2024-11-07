@@ -3,7 +3,8 @@ package chat
 import (
 	"context"
 
-	"github.com/Danya97i/chat-server/internal/client/db"
+	"github.com/Danya97i/platform_common/pkg/db"
+
 	"github.com/Danya97i/chat-server/internal/models"
 	"github.com/Danya97i/chat-server/internal/repository"
 	serv "github.com/Danya97i/chat-server/internal/service"

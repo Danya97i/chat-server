@@ -3,9 +3,9 @@ package chat
 import (
 	"context"
 
+	"github.com/Danya97i/platform_common/pkg/db"
 	"github.com/Masterminds/squirrel"
 
-	"github.com/Danya97i/chat-server/internal/client/db"
 	"github.com/Danya97i/chat-server/internal/repository"
 )
 
