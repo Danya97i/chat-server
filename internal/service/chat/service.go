@@ -1,10 +1,8 @@
 package chat
 
 import (
-	"context"
+	"github.com/Danya97i/platform_common/pkg/db"
 
-	"github.com/Danya97i/chat-server/internal/client/db"
-	"github.com/Danya97i/chat-server/internal/models"
 	"github.com/Danya97i/chat-server/internal/repository"
 	serv "github.com/Danya97i/chat-server/internal/service"
 )
@@ -24,45 +22,20 @@ func NewService(chatRepo repository.ChatRepository, logRepo repository.LogReposi
 	}
 }
 
-// Create creates new chat
-func (s *service) Create(ctx context.Context, title string, userEmails []string) (int64, error) {
-	var id int64
-	err := s.txManager.ReadCommited(ctx, func(ctx context.Context) error {
-		var txErr error
-		id, txErr = s.chatRepo.Create(ctx, title)
-		if txErr != nil {
-			return txErr
-		}
-		txErr = s.chatRepo.AddChatUsers(ctx, id, userEmails)
-		if txErr != nil {
-			return txErr
-		}
+// NewMockService creates new mock chat service
+func NewMockService(deps ...any) serv.ChatService {
+	srv := &service{}
 
-		// add log
-		txErr = s.logRepo.Save(ctx, models.LogInfo{
-			ChatID: id,
-			Action: models.ActionCreate,
-		})
-		return txErr
-	})
-	return id, err
-}
-
-// Delete – delete chat
-func (s *service) Delete(ctx context.Context, id int64) error {
-	err := s.txManager.ReadCommited(ctx, func(ctx context.Context) error {
-		var txErr error
-		txErr = s.chatRepo.Delete(ctx, id)
-		if txErr != nil {
-			return txErr
+	for _, v := range deps {
+		switch s := v.(type) {
+		case repository.ChatRepository:
+			srv.chatRepo = s
+		case repository.LogRepository:
+			srv.logRepo = s
+		case db.TxManager:
+			srv.txManager = s
 		}
+	}
 
-		// add log
-		txErr = s.logRepo.Save(ctx, models.LogInfo{
-			ChatID: id,
-			Action: models.ActionDelete,
-		})
-		return txErr
-	})
-	return err
+	return srv
 }
