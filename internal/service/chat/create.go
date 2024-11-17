@@ -27,5 +27,8 @@ func (s *service) Create(ctx context.Context, title string, userEmails []string)
 		})
 		return txErr
 	})
-	return id, err
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }

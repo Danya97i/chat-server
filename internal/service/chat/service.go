@@ -21,3 +21,21 @@ func NewService(chatRepo repository.ChatRepository, logRepo repository.LogReposi
 		txManager: txManager,
 	}
 }
+
+// NewMockService creates new mock chat service
+func NewMockService(deps ...any) serv.ChatService {
+	srv := &service{}
+
+	for _, v := range deps {
+		switch s := v.(type) {
+		case repository.ChatRepository:
+			srv.chatRepo = s
+		case repository.LogRepository:
+			srv.logRepo = s
+		case db.TxManager:
+			srv.txManager = s
+		}
+	}
+
+	return srv
+}
