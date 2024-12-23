@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 
+	"github.com/Danya97i/platform_common/pkg/closer"
+	"github.com/Danya97i/platform_common/pkg/db"
+	"github.com/Danya97i/platform_common/pkg/db/pg"
+	"github.com/Danya97i/platform_common/pkg/db/transaction"
+
 	chatServer "github.com/Danya97i/chat-server/internal/api/chat"
-	"github.com/Danya97i/chat-server/internal/client/db"
-	"github.com/Danya97i/chat-server/internal/client/db/pg"
-	"github.com/Danya97i/chat-server/internal/client/db/transaction"
-	"github.com/Danya97i/chat-server/internal/closer"
+	// "github.com/Danya97i/chat-server/internal/closer"
 	"github.com/Danya97i/chat-server/internal/config"
 	"github.com/Danya97i/chat-server/internal/config/env"
 	"github.com/Danya97i/chat-server/internal/repository"
