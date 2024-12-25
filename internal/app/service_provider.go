@@ -3,13 +3,16 @@ package app
 import (
 	"context"
 
+	"github.com/Danya97i/auth/pkg/access_v1"
 	"github.com/Danya97i/platform_common/pkg/closer"
 	"github.com/Danya97i/platform_common/pkg/db"
 	"github.com/Danya97i/platform_common/pkg/db/pg"
 	"github.com/Danya97i/platform_common/pkg/db/transaction"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	chatServer "github.com/Danya97i/chat-server/internal/api/chat"
-	// "github.com/Danya97i/chat-server/internal/closer"
+	"github.com/Danya97i/chat-server/internal/client/auth"
 	"github.com/Danya97i/chat-server/internal/config"
 	"github.com/Danya97i/chat-server/internal/config/env"
 	"github.com/Danya97i/chat-server/internal/repository"
@@ -20,14 +23,21 @@ import (
 )
 
 type serviceProvider struct {
-	pgConfig       config.PGConfig
-	grpcConfig     config.GRPCConfig
-	dbClient       db.Client
-	txManager      db.TxManager
+	pgConfig         config.PGConfig
+	grpcConfig       config.GRPCConfig
+	authClientConfig config.AuthClientConfig
+
+	dbClient  db.Client
+	txManager db.TxManager
+
 	chatRepository repository.ChatRepository
-	chatService    service.ChatService
-	chatServer     *chatServer.Server
 	logRepository  repository.LogRepository
+
+	chatService service.ChatService
+
+	chatServer *chatServer.Server
+
+	accessClient auth.AccessClient
 }
 
 func newServiceProvider() *serviceProvider {
@@ -56,6 +66,18 @@ func (sp *serviceProvider) GRPCConfig() config.GRPCConfig {
 		sp.grpcConfig = grpcConfig
 	}
 	return sp.grpcConfig
+}
+
+// AuthClientConfig returns config for auth client
+func (sp *serviceProvider) AuthClientConfig() config.AuthClientConfig {
+	if sp.authClientConfig == nil {
+		authClientConfig, err := env.NewAuthClientConfig()
+		if err != nil {
+			panic(err)
+		}
+		sp.authClientConfig = authClientConfig
+	}
+	return sp.authClientConfig
 }
 
 // DBClient returns db client
@@ -106,9 +128,31 @@ func (sp *serviceProvider) ChatServer(ctx context.Context) *chatServer.Server {
 	return sp.chatServer
 }
 
+// LogRepository returns log repository
 func (sp *serviceProvider) LogRepository(ctx context.Context) repository.LogRepository {
 	if sp.logRepository == nil {
 		sp.logRepository = logRepo.NewRepository(sp.DBClient(ctx))
 	}
 	return sp.logRepository
+}
+
+// AccessClient returns access client
+func (sp *serviceProvider) AccessClient(_ context.Context) auth.AccessClient {
+	if sp.accessClient == nil {
+		creds, err := credentials.NewClientTLSFromFile(sp.AuthClientConfig().CertFile(), "")
+		if err != nil {
+			panic(err)
+		}
+
+		conn, err := grpc.NewClient(sp.authClientConfig.Address(), grpc.WithTransportCredentials(creds))
+		if err != nil {
+			panic(err)
+		}
+
+		closer.Add(conn.Close)
+
+		client := auth.NewAccessClient(access_v1.NewAccessV1Client(conn))
+		sp.accessClient = client
+	}
+	return sp.accessClient
 }

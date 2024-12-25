@@ -18,3 +18,9 @@ type PGConfig interface {
 func Load(path string) error {
 	return godotenv.Load(path)
 }
+
+// AuthClientConfig - конфигурация для сервиса авторизации
+type AuthClientConfig interface {
+	Address() string
+	CertFile() string
+}

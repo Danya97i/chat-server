@@ -4,3 +4,4 @@
 .env
 cmd/grpc_server/.DS_Store
 /coverage.out
+service.pem
